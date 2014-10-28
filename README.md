@@ -7,9 +7,9 @@ use to display "UIAlertView" and "UIActionSheet” , that support iOS8 and iOS8 
 
 ##### As you can see
 
-> UIActionSheet ![](/Users/xinhua/Pictures/com.tencent.ScreenCapture/QQ20141028-1@2x.png)
+> UIActionSheet ![](/pic/QQ20141028-1@2x.png)
 
-> UIAlertView ![](/Users/xinhua/Pictures/com.tencent.ScreenCapture/QQ20141028-2@2x.png)
+> UIAlertView ![](/pic/QQ20141028-2@2x.png)
 
 ##### In iOS8 after，system provide a new class `UIAlertController` replace `UIAlertView` and `UIActionSheet`.
 
