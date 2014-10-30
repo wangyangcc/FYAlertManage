@@ -31,9 +31,9 @@ Display a `UIAlertView`
 
     FYAlertManage *alertMan = [[FYAlertManage alloc] initWithTitle:@"提示" message:@"内容" delegate:self cancelButtonTitle:@"取消" otherButtonTitles:@"第一个按钮",@"第一个按钮",nil];
     [alertMan show];
-`#if ! __has_feature(objc_arc)
+    #if ! __has_feature(objc_arc)
     [alertMan release];
-`#endif
+    #endif
 </pre></code>
 
 Display a `UIAlertView` with Login And Password Input
@@ -43,9 +43,9 @@ Display a `UIAlertView` with Login And Password Input
     alertMan.alertViewStyle = UIAlertViewStyleLoginAndPasswordInput;
     alertMan.tag = 333;
     [alertMan show];
- #if ! __has_feature(objc_arc)
+    #if ! __has_feature(objc_arc)
     [alertMan release];
- #endif
+    #endif
 </pre></code>
 
 Display a `UIActionSheet`
@@ -54,9 +54,9 @@ Display a `UIActionSheet`
 
     FYAlertManage *alertMan = [[FYAlertManage alloc] initWithTitle:@"提示" delegate:self cancelButtonTitle:@"取消" destructiveButtonTitle:@"特别提醒按钮" otherButtonTitles:@"第一个按钮",nil];
     [alertMan showInView:self.view];
- #if ! __has_feature(objc_arc)
+    #if ! __has_feature(objc_arc)
     [alertMan release];
- #endif
+    #endif
 </pre></code>
 
 ## Licenses
