@@ -1,50 +1,50 @@
 //
-//  FYAlertManage.m
+//  MMAlertManage.m
 //  ExtensionDemo
 //
 //  Created by wangyangyang on 14/10/28.
 //  Copyright (c) 2014年 wang yangyang. All rights reserved.
 //
 
-#import "FYAlertManage.h"
+#import "MMAlertManage.h"
 #import "NSObject+LogDealloc.h"
 #import "objc/runtime.h"
 
 #if ! __has_feature(objc_arc)
-    #define FYAlertManageAutorelease(__v) ([__v autorelease]);
-    #define FYAlertManageAutoreleased FMDBAutorelease
+    #define MMAlertManageAutorelease(__v) ([__v autorelease]);
+    #define MMAlertManageAutoreleased FMDBAutorelease
 
-    #define FYAlertManageRetain(__v) ([__v retain]);
-    #define FYAlertManageRetained FMDBRetain
+    #define MMAlertManageRetain(__v) ([__v retain]);
+    #define MMAlertManageRetained FMDBRetain
 
-    #define FYAlertManageRelease(__v) ([__v release]);
+    #define MMAlertManageRelease(__v) ([__v release]);
 
 #else
     // -fobjc-arc
-    #define FYAlertManageAutorelease(__v)
-    #define FYAlertManageReturnAutoreleased(__v) (__v)
+    #define MMAlertManageAutorelease(__v)
+    #define MMAlertManageReturnAutoreleased(__v) (__v)
 
-    #define FYAlertManageRetain(__v)
-    #define FYAlertManageReturnRetained(__v) (__v)
+    #define MMAlertManageRetain(__v)
+    #define MMAlertManageReturnRetained(__v) (__v)
 
-    #define FYAlertManageRelease(__v)
+    #define MMAlertManageRelease(__v)
 #endif
 
-#define FYIOS8After floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_7_1
+#define MMIOS8After floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_7_1
 
-@interface FYAlertManage () <UIAlertViewDelegate, UIActionSheetDelegate>
+@interface MMAlertManage () <UIAlertViewDelegate, UIActionSheetDelegate>
 
 @property (nonatomic, retain) UIAlertView *showAlertView;
 @property (nonatomic, retain) UIActionSheet *showActionSheet;
 
 @end
 
-static char FYAlertManageUIAlertViewKey;
-static char FYAlertManageUIActionSheetKey;
-static char FYAlertManageUIAlertControllerKey;
-static char FYAlertManageKey;
+static char MMAlertManageUIAlertViewKey;
+static char MMAlertManageUIActionSheetKey;
+static char MMAlertManageUIAlertControllerKey;
+static char MMAlertManageKey;
 
-@implementation FYAlertManage
+@implementation MMAlertManage
 @dynamic showActionSheet, showAlertView;
 
 #pragma mark -
@@ -54,16 +54,15 @@ static char FYAlertManageKey;
  *   @brief 兼容 iOS8 之前使用UIAlertView
  **/
 
-- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message delegate:(id<FYAlertManageDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle otherButtonTitles:(NSString *)otherButtonTitles, ...
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message delegate:(id<MMAlertManageDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle otherButtonTitles:(NSString *)otherButtonTitles, ...
 {
     self = [super init];
-    if (FYIOS8After) {
+    if (MMIOS8After) {
         UIAlertController *alertViewCon = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-        [alertViewCon logOnDealloc];
 #if ! __has_feature(objc_arc)
-        __unsafe_unretained FYAlertManage *wself = self;
+        __unsafe_unretained MMAlertManage *wself = self;
 #else
-        __weak FYAlertManage *wself = self;
+        __weak MMAlertManage *wself = self;
 #endif
         
         if (cancelButtonTitle) {
@@ -75,7 +74,6 @@ static char FYAlertManageKey;
                     [wself.delegate alertView:self didDismissWithButtonIndex:0];
                 }
                 [wself alertControllerDealloc];
-                self.cancelButtonIndex = 0;
             }]];
         }
         else {
@@ -99,8 +97,8 @@ static char FYAlertManageKey;
         }
         va_end(args);
         
-        objc_setAssociatedObject(self, &FYAlertManageUIAlertControllerKey, alertViewCon, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(alertViewCon, &FYAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(self, &MMAlertManageUIAlertControllerKey, alertViewCon, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(alertViewCon, &MMAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     else {
         UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:message delegate:delegate cancelButtonTitle:cancelButtonTitle otherButtonTitles:nil];
@@ -113,20 +111,18 @@ static char FYAlertManageKey;
         va_end(args);
         
         alertView.delegate = self;
-        [alertView logOnDealloc];
-        objc_setAssociatedObject(self, &FYAlertManageUIAlertViewKey, alertView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(alertView, &FYAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        FYAlertManageAutorelease(alertView);
+        objc_setAssociatedObject(self, &MMAlertManageUIAlertViewKey, alertView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(alertView, &MMAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        MMAlertManageAutorelease(alertView);
     }
     self.delegate = delegate;
-    [self logOnDealloc];
     return self;
 }
 
 - (UIAlertView *)showAlertView
 {
-    if (FYIOS8After == NO) {
-        UIAlertView *alertView = objc_getAssociatedObject(self, &FYAlertManageUIAlertViewKey);
+    if (MMIOS8After == NO) {
+        UIAlertView *alertView = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
         if (alertView) {
             return alertView;
         }
@@ -136,18 +132,18 @@ static char FYAlertManageKey;
 
 - (void)show
 {
-    if (FYIOS8After) {
-        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &FYAlertManageUIAlertControllerKey);
+    if (MMIOS8After) {
+        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &MMAlertManageUIAlertControllerKey);
         if (alertViewCon) {
             if ([self.delegate respondsToSelector:@selector(willPresentAlertView:)]) {
                 [self.delegate willPresentAlertView:self];
             }
 #if ! __has_feature(objc_arc)
-            __unsafe_unretained FYAlertManage *wself = self;
+            __unsafe_unretained MMAlertManage *wself = self;
 #else
-            __weak FYAlertManage *wself = self;
+            __weak MMAlertManage *wself = self;
 #endif
-            [[[UIApplication sharedApplication] keyWindow].rootViewController presentViewController:alertViewCon animated:YES completion:^{
+            [[self getCurrentCanDisplayVC] presentViewController:alertViewCon animated:YES completion:^{
                 if ([wself.delegate respondsToSelector:@selector(didPresentAlertView:)]) {
                     [wself.delegate didPresentAlertView:self];
                 }
@@ -155,7 +151,7 @@ static char FYAlertManageKey;
         }
     }
     else {
-        UIAlertView *alertView = objc_getAssociatedObject(self, &FYAlertManageUIAlertViewKey);
+        UIAlertView *alertView = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
         if (alertView) {
             self.cancelButtonIndex = alertView.cancelButtonIndex;
             [alertView show];
@@ -163,11 +159,78 @@ static char FYAlertManageKey;
     }
 }
 
+- (void)showAlertViewLeftAlignmentMessage:(NSString *)message
+{
+    if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1 == NO) {
+        UIAlertView *alertViewTemp = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
+        
+        @try {
+            //调整标题为左对齐
+            NSArray *labelArray = [alertViewTemp subviews];
+            UILabel *titlelabel = [labelArray objectAtIndex:1];
+            titlelabel.lineBreakMode = NSLineBreakByWordWrapping;
+            titlelabel.numberOfLines = 0;
+            titlelabel.textAlignment = NSTextAlignmentLeft;
+        }
+        @catch (NSException *exception) {
+            
+        }
+
+        [self show];
+        return;
+    }
+    if (MMIOS8After) {
+        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &MMAlertManageUIAlertControllerKey);
+        
+        @try {
+            //调整标题为左对齐
+            NSArray *labelArray = [[[[[[[[[[[alertViewCon.view subviews] firstObject] subviews] lastObject] subviews] firstObject] subviews] firstObject] subviews] firstObject] subviews];
+            UILabel *titlelabel = [labelArray objectAtIndex:1];
+            titlelabel.lineBreakMode = NSLineBreakByWordWrapping;
+            titlelabel.numberOfLines = 0;
+            titlelabel.textAlignment = NSTextAlignmentLeft;
+        }
+        @catch (NSException *exception) {
+            
+        }
+        [self show];
+    }
+    else {
+        UIAlertView *alertViewTemp = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
+
+        //计算高度
+        NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc] initWithString:message];
+        NSRange allRange = NSMakeRange(0, message.length);
+        [attrStr addAttribute:NSFontAttributeName
+                        value:[UIFont systemFontOfSize:15]
+                        range:allRange];
+        [attrStr addAttribute:NSForegroundColorAttributeName
+                        value:[UIColor blackColor]
+                        range:allRange];
+        CGRect titleLabelRect = [attrStr boundingRectWithSize:CGSizeMake(230, 400) options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading context:nil];
+        CGSize size = CGSizeMake(titleLabelRect.size.width, titleLabelRect.size.height + 2);
+        //end
+        
+        UILabel *textLabel = [[UILabel alloc] initWithFrame:CGRectMake(5, -20, 230, size.height)];
+        textLabel.font = [UIFont systemFontOfSize:15];
+        textLabel.textColor = [UIColor blackColor];
+        textLabel.backgroundColor = [UIColor clearColor];
+        textLabel.lineBreakMode = NSLineBreakByWordWrapping;
+        textLabel.numberOfLines = 0;
+        textLabel.textAlignment = NSTextAlignmentLeft;
+        textLabel.text = [NSString stringWithFormat:@" %@",message];
+        [alertViewTemp setValue:textLabel forKey:@"accessoryView"];
+        
+        alertViewTemp.message = @"";
+        [self show];
+    }
+}
+
 - (void)setAlertViewStyle:(UIAlertViewStyle)alertViewStyle
 {
     _alertViewStyle = alertViewStyle;
-    if (FYIOS8After) {
-        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &FYAlertManageUIAlertControllerKey);
+    if (MMIOS8After) {
+        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &MMAlertManageUIAlertControllerKey);
         if (alertViewCon == nil) {
             return;
         }
@@ -199,7 +262,7 @@ static char FYAlertManageKey;
     }
     else
     {
-        UIAlertView *alertView = objc_getAssociatedObject(self, &FYAlertManageUIAlertViewKey);
+        UIAlertView *alertView = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
         if (alertView) {
             alertView.alertViewStyle = alertViewStyle;
         }
@@ -208,8 +271,8 @@ static char FYAlertManageKey;
 
 - (UITextField *)textFieldAtIndex:(NSInteger)textFieldIndex
 {
-    if (FYIOS8After) {
-        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &FYAlertManageUIAlertControllerKey);
+    if (MMIOS8After) {
+        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &MMAlertManageUIAlertControllerKey);
         if (alertViewCon) {
             if (textFieldIndex < 0) {
                 textFieldIndex = 0;
@@ -222,7 +285,7 @@ static char FYAlertManageKey;
         return nil;
     }
     else {
-        UIAlertView *alertView = objc_getAssociatedObject(self, &FYAlertManageUIAlertViewKey);
+        UIAlertView *alertView = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
         if (alertView) {
             return [alertView textFieldAtIndex:textFieldIndex];
         }
@@ -232,10 +295,10 @@ static char FYAlertManageKey;
 
 - (void)alertViewDealloc
 {
-    UIAlertView *alertViewTemp = objc_getAssociatedObject(self, &FYAlertManageUIAlertViewKey);
+    UIAlertView *alertViewTemp = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
     if (alertViewTemp) {
-        objc_setAssociatedObject(alertViewTemp, &FYAlertManageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(self, &FYAlertManageUIAlertViewKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(alertViewTemp, &MMAlertManageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(self, &MMAlertManageUIAlertViewKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
 }
 
@@ -278,17 +341,16 @@ static char FYAlertManageKey;
  *   @brief 兼容 iOS8 之前使用UIActionSheet
  **/
 
-- (instancetype)initWithTitle:(NSString *)title delegate:(id<FYAlertManageDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle destructiveButtonTitle:(NSString *)destructiveButtonTitle otherButtonTitles:(NSString *)otherButtonTitles, ...
+- (instancetype)initWithTitle:(NSString *)title delegate:(id<MMAlertManageDelegate>)delegate cancelButtonTitle:(NSString *)cancelButtonTitle destructiveButtonTitle:(NSString *)destructiveButtonTitle otherButtonTitles:(NSString *)otherButtonTitles, ...
 {
     self = [super init];
-    if (FYIOS8After) {
+    if (MMIOS8After) {
         UIAlertController *alertViewCon = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-        [alertViewCon logOnDealloc];
         
 #if ! __has_feature(objc_arc)
-        __unsafe_unretained FYAlertManage *wself = self;
+        __unsafe_unretained MMAlertManage *wself = self;
 #else
-        __weak FYAlertManage *wself = self;
+        __weak MMAlertManage *wself = self;
 #endif
 
         __block NSInteger beginNumber = 0;
@@ -335,12 +397,9 @@ static char FYAlertManageKey;
                 [wself alertControllerDealloc];
             }]];
         }
-        else {
-            self.cancelButtonIndex = -1;
-        }
         
-        objc_setAssociatedObject(self, &FYAlertManageUIAlertControllerKey, alertViewCon, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(alertViewCon, &FYAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(self, &MMAlertManageUIAlertControllerKey, alertViewCon, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(alertViewCon, &MMAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     else {
         UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:nil destructiveButtonTitle:destructiveButtonTitle otherButtonTitles:nil];
@@ -362,20 +421,18 @@ static char FYAlertManageKey;
             [actionSheet setCancelButtonIndex:cancelButtonNum];
         }
         
-        [actionSheet logOnDealloc];
-        objc_setAssociatedObject(self, &FYAlertManageUIActionSheetKey, actionSheet, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(actionSheet, &FYAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        FYAlertManageRelease(actionSheet);
+        objc_setAssociatedObject(self, &MMAlertManageUIActionSheetKey, actionSheet, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(actionSheet, &MMAlertManageKey, self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        MMAlertManageRelease(actionSheet);
     }
     self.delegate = delegate;
-    [self logOnDealloc];
     return self;
 }
 
 - (UIActionSheet *)showActionSheet
 {
-    if (FYIOS8After == NO) {
-        UIActionSheet *actionSheet = objc_getAssociatedObject(self, &FYAlertManageUIActionSheetKey);
+    if (MMIOS8After == NO) {
+        UIActionSheet *actionSheet = objc_getAssociatedObject(self, &MMAlertManageUIActionSheetKey);
         if (actionSheet) {
             return actionSheet;
         }
@@ -386,18 +443,18 @@ static char FYAlertManageKey;
 
 - (void)showInView:(UIView *)view
 {
-    if (FYIOS8After) {
-        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &FYAlertManageUIAlertControllerKey);
+    if (MMIOS8After) {
+        UIAlertController *alertViewCon = objc_getAssociatedObject(self, &MMAlertManageUIAlertControllerKey);
         if (alertViewCon) {
             if ([self.delegate respondsToSelector:@selector(willPresentActionSheet:)]) {
                 [self.delegate willPresentActionSheet:self];
             }
 #if ! __has_feature(objc_arc)
-            __unsafe_unretained FYAlertManage *wself = self;
+            __unsafe_unretained MMAlertManage *wself = self;
 #else
-            __weak FYAlertManage *wself = self;
+            __weak MMAlertManage *wself = self;
 #endif
-            [[[UIApplication sharedApplication] keyWindow].rootViewController presentViewController:alertViewCon animated:YES completion:^{
+            [[self getCurrentCanDisplayVC] presentViewController:alertViewCon animated:YES completion:^{
                 if ([wself.delegate respondsToSelector:@selector(didPresentActionSheet:)]) {
                     [wself.delegate didPresentActionSheet:self];
                 }
@@ -405,26 +462,50 @@ static char FYAlertManageKey;
         }
     }
     else {
-        UIActionSheet *actionSheet = objc_getAssociatedObject(self, &FYAlertManageUIActionSheetKey);
-        if ([view isKindOfClass:[UITabBar class]]) {
-            [actionSheet showFromTabBar:(UITabBar *)view];
-        }
-        else if ([view isKindOfClass:[UIToolbar class]]) {
-            [actionSheet showFromToolbar:(UIToolbar *)view];
-        }
-        else {
-            [actionSheet showInView:view];
+        UIActionSheet *actionSheet = objc_getAssociatedObject(self, &MMAlertManageUIActionSheetKey);
+        if (actionSheet) {
+            self.cancelButtonIndex = actionSheet.cancelButtonIndex;
+            if ([view isKindOfClass:[UITabBar class]]) {
+                [actionSheet showFromTabBar:(UITabBar *)view];
+            }
+            else if ([view isKindOfClass:[UIToolbar class]]) {
+                [actionSheet showFromToolbar:(UIToolbar *)view];
+            }
+            else {
+                [actionSheet showInView:view];
+            }
         }
     }
 }
 
 - (void)actionSheetDealloc
 {
-    UIActionSheet *actionSheet = objc_getAssociatedObject(self, &FYAlertManageUIActionSheetKey);
+    UIActionSheet *actionSheet = objc_getAssociatedObject(self, &MMAlertManageUIActionSheetKey);
     if (actionSheet) {
-        objc_setAssociatedObject(actionSheet, &FYAlertManageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(self, &FYAlertManageUIActionSheetKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(actionSheet, &MMAlertManageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(self, &MMAlertManageUIActionSheetKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
+}
+
+/**
+ *  得到当前显示出来的vc
+ *
+ *  @return vc
+ */
+- (UIViewController *)getCurrentCanDisplayVC
+{
+    UIViewController *rootViewController = [[UIApplication sharedApplication] keyWindow].rootViewController;
+    if ([rootViewController isKindOfClass:[UINavigationController class]]) {
+        return [(UINavigationController *)rootViewController visibleViewController];
+    }
+    else if ([rootViewController isKindOfClass:[UITabBarController class]]) {
+        UIViewController *selectedViewController = [(UITabBarController *)rootViewController selectedViewController];
+        if ([selectedViewController isKindOfClass:[UINavigationController class]]) {
+            return [(UINavigationController *)selectedViewController visibleViewController];
+        }
+        return [(UITabBarController *)rootViewController selectedViewController];
+    }
+    return rootViewController;
 }
 
 #pragma mark UIActionSheetDelegate
@@ -464,7 +545,6 @@ static char FYAlertManageKey;
 /**
  *   @brief 兼容 iOS8 之前使用 UIAlertView 和 UIActionSheet 的通用属性
  **/
-
 - (void)setTag:(NSInteger)tag
 {
     _tag = tag;
@@ -476,15 +556,6 @@ static char FYAlertManageKey;
     }
 }
 
-- (void)alertControllerDealloc
-{
-    UIAlertController *alertCon = objc_getAssociatedObject(self, &FYAlertManageUIAlertControllerKey);
-    if (alertCon) {
-        objc_setAssociatedObject(alertCon, &FYAlertManageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(self, &FYAlertManageUIAlertControllerKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-}
-
 - (void)setAlertData:(id)alertData
 {
     if (_alertData) {
@@ -492,17 +563,26 @@ static char FYAlertManageKey;
     }
     _alertData = [alertData copy];
     //设置 iOS8 之前的数据
-    if (FYIOS8After == NO) {
+    if (MMIOS8After == NO) {
         
-        UIActionSheet *actionSheet = objc_getAssociatedObject(self, &FYAlertManageUIActionSheetKey);
+        UIActionSheet *actionSheet = objc_getAssociatedObject(self, &MMAlertManageUIActionSheetKey);
         if (actionSheet) {
             actionSheet.alertData = alertData;
         }
         
-        UIAlertView *alertView = objc_getAssociatedObject(self, &FYAlertManageUIAlertViewKey);
+        UIAlertView *alertView = objc_getAssociatedObject(self, &MMAlertManageUIAlertViewKey);
         if (alertView) {
             alertView.alertData = alertData;
         }
+    }
+}
+
+- (void)alertControllerDealloc
+{
+    UIAlertController *alertCon = objc_getAssociatedObject(self, &MMAlertManageUIAlertControllerKey);
+    if (alertCon) {
+        objc_setAssociatedObject(alertCon, &MMAlertManageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(self, &MMAlertManageUIAlertControllerKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
 }
 
